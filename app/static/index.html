@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivia Quest</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0d0221;
+  --bg2:       #1a0533;
+  --card:      rgba(255,255,255,0.07);
+  --card-border: rgba(255,255,255,0.12);
+  --purple:    #a855f7;
+  --purple-dk: #7c3aed;
+  --blue:      #60a5fa;
+  --text:      #f1f5f9;
+  --muted:     #94a3b8;
+  --correct:   #22c55e;
+  --wrong:     #ef4444;
+  --radius:    14px;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+  background-attachment: fixed;
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ── Screens ──────────────────────────────────────────────────────────── */
+
+.screen {
+  display: none;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.35s ease;
+}
+.screen.active { display: flex; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Cards ────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  padding: 36px 40px;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--purple-dk), var(--purple));
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 36px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  box-shadow: 0 4px 20px rgba(168,85,247,0.35);
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(168,85,247,0.5);
+}
+.btn-primary:active:not(:disabled) { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--card-border);
+  border-radius: 50px;
+  padding: 12px 28px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   START SCREEN
+══════════════════════════════════════════════════════════════════════════ */
+
+#screen-start .inner { text-align: center; max-width: 480px; }
+.logo-wrap { font-size: 5rem; margin-bottom: 20px; animation: pulse 3s ease-in-out infinite; }
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+#screen-start h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+#screen-start p { color: var(--muted); font-size: 1.1rem; margin-bottom: 40px; }
+.start-btn { font-size: 1.2rem; padding: 16px 60px; letter-spacing: 0.04em; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THEME SCREEN
+══════════════════════════════════════════════════════════════════════════ */
+
+#screen-themes .inner { width: 100%; max-width: 700px; }
+#screen-themes h2 { font-size: 1.8rem; font-weight: 700; text-align: center; margin-bottom: 8px; }
+#screen-themes .sub { color: var(--muted); text-align: center; margin-bottom: 28px; font-size: 0.95rem; }
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+@media (max-width: 600px) { .theme-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.theme-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border-radius: 12px;
+  border: 1.5px solid var(--card-border);
+  background: var(--card);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+  user-select: none;
+}
+.theme-chip .em { font-size: 1.8rem; }
+.theme-chip:hover { border-color: var(--purple); color: var(--text); transform: translateY(-2px); }
+.theme-chip.selected { border-color: var(--purple); background: rgba(168,85,247,0.18); color: var(--text); }
+
+.custom-row { display: flex; gap: 10px; align-items: center; }
+.custom-row input {
+  flex: 1;
+  padding: 13px 18px;
+  border-radius: 50px;
+  border: 1.5px solid var(--card-border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.custom-row input::placeholder { color: var(--muted); }
+.custom-row input:focus { border-color: var(--purple); }
+.back-btn { margin-top: 16px; display: block; text-align: center; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LOADING SCREEN
+══════════════════════════════════════════════════════════════════════════ */
+
+#screen-loading .inner { text-align: center; max-width: 420px; }
+.spinner-wrap { margin-bottom: 28px; }
+.spinner {
+  width: 60px; height: 60px;
+  border: 4px solid rgba(168,85,247,0.2);
+  border-top-color: var(--purple);
+  border-radius: 50%;
+  margin: 0 auto;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#loading-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; }
+#loading-sub   { color: var(--muted); font-size: 0.95rem; margin-bottom: 20px; }
+
+/* Progress bar */
+.progress-wrap {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple-dk), var(--purple));
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   GAME SCREEN
+══════════════════════════════════════════════════════════════════════════ */
+
+#screen-game {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--card-border);
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.game-theme-label { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+.game-theme-name  { font-weight: 700; font-size: 1.05rem; color: var(--purple); }
+.score-box        { text-align: right; }
+.score-label      { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+.score-value      { font-size: 1.3rem; font-weight: 800; }
+.score-correct    { color: var(--correct); }
+.score-sep        { color: var(--muted); }
+.score-total      { color: var(--muted); }
+
+.game-body {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 24px 48px;
+}
+.game-inner {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Question card */
+.q-card { padding: 30px 32px; }
+.q-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.q-meta { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+.joker-badge {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  animation: jokerPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  box-shadow: 0 2px 12px rgba(245,158,11,0.5);
+}
+.joker-badge.active { display: flex; }
+@keyframes jokerPop {
+  0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+  70%  { transform: scale(1.1) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg);   opacity: 1; }
+}
+.q-source { font-size: 0.8rem; color: rgba(168,85,247,0.7); margin-bottom: 14px; font-style: italic; }
+.q-text   { font-size: 1.2rem; font-weight: 600; line-height: 1.55; color: var(--text); }
+
+/* Choices */
+.choices-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 520px) { .choices-grid { grid-template-columns: 1fr; } }
+
+.choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--card);
+  border: 1.5px solid var(--card-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  text-align: left;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.choice-btn:hover:not(:disabled) {
+  border-color: var(--purple);
+  background: rgba(168,85,247,0.12);
+  transform: translateY(-2px);
+}
+.choice-btn:disabled { cursor: default; }
+
+.choice-letter {
+  flex-shrink: 0;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1.5px solid rgba(255,255,255,0.15);
+}
+.choice-btn.correct { border-color: var(--correct); background: rgba(34,197,94,0.18); animation: popIn 0.25s ease; }
+.choice-btn.correct .choice-letter { background: var(--correct); border-color: var(--correct); color: #fff; }
+.choice-btn.wrong   { border-color: var(--wrong);   background: rgba(239,68,68,0.18); }
+.choice-btn.wrong   .choice-letter { background: var(--wrong);   border-color: var(--wrong);   color: #fff; }
+
+@keyframes popIn {
+  0%   { transform: scale(0.95); }
+  60%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+/* Result banner */
+.result-banner {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 22px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  animation: fadeIn 0.3s ease;
+}
+.result-banner.correct-banner { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.35); color: #4ade80; }
+.result-banner.wrong-banner   { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: #f87171; }
+.result-banner.active { display: flex; }
+.result-icon { font-size: 1.4rem; }
+
+/* Actions */
+.game-actions { display: none; gap: 12px; flex-wrap: wrap; }
+.game-actions.active { display: flex; }
+#next-btn   { flex: 1; min-width: 200px; }
+#change-btn { padding: 14px 24px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RESULTS SCREEN
+══════════════════════════════════════════════════════════════════════════ */
+
+#screen-results .inner { text-align: center; max-width: 480px; }
+
+.results-emoji { font-size: 5rem; margin-bottom: 16px; }
+
+#screen-results h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.results-score {
+  font-size: 4rem;
+  font-weight: 900;
+  margin: 24px 0 8px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.results-label { color: var(--muted); font-size: 1rem; margin-bottom: 32px; }
+
+.results-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+</style>
+</head>
+<body>
+
+<!-- ── START ──────────────────────────────────────────────────────────────── -->
+<div id="screen-start" class="screen active">
+  <div class="inner">
+    <div class="logo-wrap">🧠</div>
+    <h1>Trivia Quest</h1>
+    <p>Pick a topic. Answer 5 questions. See how you do.</p>
+    <button class="btn-primary start-btn" onclick="showThemes()">START</button>
+  </div>
+</div>
+
+<!-- ── THEMES ─────────────────────────────────────────────────────────────── -->
+<div id="screen-themes" class="screen">
+  <div class="inner">
+    <h2>Choose a Theme</h2>
+    <p class="sub">Pick a suggestion or type anything you like</p>
+    <div class="theme-grid" id="theme-grid"></div>
+    <div class="custom-row">
+      <input type="text" id="custom-input" placeholder="Or type your own topic…"
+             oninput="onCustomInput()" onkeydown="if(event.key==='Enter') startGame()"/>
+      <button class="btn-primary" id="go-btn" onclick="startGame()" disabled>Go!</button>
+    </div>
+    <div class="back-btn">
+      <button class="btn-ghost" onclick="showScreen('screen-start')">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOADING ────────────────────────────────────────────────────────────── -->
+<div id="screen-loading" class="screen">
+  <div class="inner">
+    <div class="spinner-wrap"><div class="spinner"></div></div>
+    <h2 id="loading-title">Loading…</h2>
+    <p id="loading-sub">Searching Wikipedia…</p>
+    <div class="progress-wrap" id="progress-wrap" style="display:none">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── GAME ───────────────────────────────────────────────────────────────── -->
+<div id="screen-game" class="screen">
+
+  <div class="game-header">
+    <div>
+      <div class="game-theme-label">Topic</div>
+      <div class="game-theme-name" id="hdr-theme">–</div>
+    </div>
+    <div class="score-box">
+      <div class="score-label">Score</div>
+      <div class="score-value">
+        <span class="score-correct" id="hdr-correct">0</span>
+        <span class="score-sep"> / </span>
+        <span class="score-total"  id="hdr-total">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-body">
+    <div class="game-inner">
+
+      <div class="card q-card">
+        <div class="q-meta-row">
+          <span class="q-meta" id="q-meta">Question 1 / 5</span>
+          <span class="joker-badge" id="joker-badge">🃏 Joker Question!</span>
+        </div>
+        <div class="q-source" id="q-source"></div>
+        <div class="q-text"   id="q-text">Loading…</div>
+      </div>
+
+      <div class="choices-grid" id="choices-grid"></div>
+
+      <div class="result-banner" id="result-banner">
+        <span class="result-icon" id="result-icon"></span>
+        <span id="result-text"></span>
+      </div>
+
+      <div class="game-actions" id="game-actions">
+        <button class="btn-primary" id="next-btn" onclick="nextQuestion()">
+          Next Question →
+        </button>
+        <button class="btn-ghost" id="change-btn" onclick="changeTheme()">
+          Change Topic
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── RESULTS ────────────────────────────────────────────────────────────── -->
+<div id="screen-results" class="screen">
+  <div class="inner">
+    <div class="results-emoji" id="results-emoji">🏆</div>
+    <h2 id="results-title">Quiz Complete!</h2>
+    <div class="results-score" id="results-score">0 / 5</div>
+    <p class="results-label" id="results-label">questions correct</p>
+    <div class="results-actions">
+      <button class="btn-primary" onclick="playAgain()">Play Again</button>
+      <button class="btn-ghost"   onclick="showThemes()">Change Topic</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════════════════ */
+const g = {
+  theme:        '',
+  questions:    [],   // questions received so far
+  totalQuestions: 5,
+  foundTitle:   '',
+  generationDone: false,
+  inGame:       false,
+  currentIndex: 0,   // which question we are on (0-based)
+  scoreCorrect: 0,
+  answered:     false,
+  pollTimer:    null,
+};
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCREEN HELPERS
+═══════════════════════════════════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function activeScreenId() {
+  const active = document.querySelector('.screen.active');
+  return active ? active.id : '';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   START → THEMES
+═══════════════════════════════════════════════════════════════════════════ */
+async function showThemes() {
+  clearTimeout(g.pollTimer);
+  showScreen('screen-themes');
+  g.theme = '';
+  document.getElementById('custom-input').value = '';
+  document.getElementById('go-btn').disabled = true;
+  document.querySelectorAll('.theme-chip').forEach(c => c.classList.remove('selected'));
+
+  const grid = document.getElementById('theme-grid');
+  grid.innerHTML = '<div style="color:var(--muted);font-size:0.9rem">Loading suggestions…</div>';
+
+  try {
+    const { themes } = await api('/api/themes');
+    grid.innerHTML = '';
+    themes.forEach(t => {
+      const chip = document.createElement('div');
+      chip.className = 'theme-chip';
+      chip.innerHTML = `<span class="em">${t.emoji}</span><span>${t.label}</span>`;
+      chip.onclick = () => selectChip(chip, t.label);
+      grid.appendChild(chip);
+    });
+  } catch {
+    grid.innerHTML = '<div style="color:var(--muted)">Could not load suggestions.</div>';
+  }
+}
+
+function selectChip(chip, label) {
+  document.querySelectorAll('.theme-chip').forEach(c => c.classList.remove('selected'));
+  chip.classList.add('selected');
+  g.theme = label;
+  document.getElementById('custom-input').value = '';
+  document.getElementById('go-btn').disabled = false;
+}
+
+function onCustomInput() {
+  const val = document.getElementById('custom-input').value.trim();
+  document.querySelectorAll('.theme-chip').forEach(c => c.classList.remove('selected'));
+  g.theme = val;
+  document.getElementById('go-btn').disabled = !val;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   START GAME
+═══════════════════════════════════════════════════════════════════════════ */
+async function startGame() {
+  const custom = document.getElementById('custom-input').value.trim();
+  const theme  = custom || g.theme;
+  if (!theme) return;
+  g.theme = theme;
+  g.questions = [];
+  g.totalQuestions = 5;
+  g.foundTitle = '';
+  g.generationDone = false;
+  g.inGame = false;
+  g.currentIndex = 0;
+  g.scoreCorrect = 0;
+  g.answered = false;
+
+  showScreen('screen-loading');
+  setLoading(`Finding "${theme}" on Wikipedia…`, 'One moment…');
+  document.getElementById('progress-wrap').style.display = 'none';
+  setProgress(0, 5);
+
+  try {
+    await api('/api/start', 'POST', { theme });
+    pollStatus();
+  } catch (e) {
+    setLoading('Error', e.message || 'Could not start game.');
+  }
+}
+
+function setLoading(title, sub) {
+  document.getElementById('loading-title').textContent = title;
+  document.getElementById('loading-sub').textContent   = sub;
+}
+
+function setProgress(done, total) {
+  const pct = total > 0 ? (done / total) * 100 : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   POLL STATUS
+═══════════════════════════════════════════════════════════════════════════ */
+function pollStatus() {
+  clearTimeout(g.pollTimer);
+  g.pollTimer = setTimeout(async () => {
+    try {
+      const data = await api('/api/status');
+
+      if (data.status === 'loading') {
+        setLoading(data.found_title || g.theme, 'Searching Wikipedia…');
+        pollStatus();
+
+      } else if (data.status === 'generating') {
+        updateFromStatus(data, false);
+        pollStatus();
+        return;
+        const done  = data.progress;
+        const total = data.total;
+        setLoading(data.found_title || g.theme,
+          `Generating questions… ${done} / ${total}`);
+        document.getElementById('progress-wrap').style.display = 'block';
+        setProgress(done, total);
+        pollStatus();
+
+      } else if (data.status === 'ready') {
+        updateFromStatus(data, true);
+        return;
+        beginGame(data.questions, data.found_title);
+
+      } else {
+        // error
+        setLoading('Oops!', data.error || 'Something went wrong. Try a different topic.');
+        setTimeout(() => showThemes(), 3500);
+      }
+    } catch {
+      pollStatus();   // retry on network blip
+    }
+  }, 700);
+}
+
+function updateFromStatus(data, isDone) {
+  const done  = data.progress || (Array.isArray(data.questions) ? data.questions.length : 0);
+  const total = data.total || g.totalQuestions || 5;
+
+  g.totalQuestions = total;
+  g.foundTitle = data.found_title || g.foundTitle || g.theme;
+  g.generationDone = isDone;
+
+  if (Array.isArray(data.questions) && data.questions.length >= g.questions.length) {
+    g.questions = data.questions;
+  }
+
+  if (!g.inGame && g.questions.length > 0) {
+    beginGame(g.questions, g.foundTitle);
+    return;
+  }
+
+  if (!g.inGame) {
+    setLoading(g.foundTitle || g.theme, `Generating first question... ${done} / ${total}`);
+    document.getElementById('progress-wrap').style.display = 'block';
+    setProgress(done, total);
+    return;
+  }
+
+  document.getElementById('hdr-theme').textContent = g.foundTitle || g.theme;
+  updateNextButtonState();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GAME
+═══════════════════════════════════════════════════════════════════════════ */
+function beginGame(questions, foundTitle) {
+  g.questions    = questions;
+  g.currentIndex = 0;
+  g.scoreCorrect = 0;
+  g.inGame       = true;
+  document.getElementById('hdr-theme').textContent = foundTitle || g.theme;
+  showQuestion(0);
+}
+
+function showQuestion(index) {
+  const q     = g.questions[index];
+  const total = g.totalQuestions || g.questions.length;
+  g.answered  = false;
+
+  // Progress & score header
+  document.getElementById('q-meta').textContent    = `Question ${index + 1} / ${total}`;
+  document.getElementById('hdr-correct').textContent = g.scoreCorrect;
+  document.getElementById('hdr-total').textContent   = index;   // answered so far
+
+  // Question body
+  document.getElementById('q-source').textContent =
+    q.source_title ? `📖 ${q.source_title}` : '';
+  document.getElementById('q-text').textContent   = q.question;
+
+  // Joker badge
+  const badge = document.getElementById('joker-badge');
+  badge.classList.remove('active');
+  if (q.is_joker) {
+    void badge.offsetWidth;
+    badge.classList.add('active');
+  }
+
+  // Choices
+  const grid = document.getElementById('choices-grid');
+  grid.innerHTML = '';
+  q.choices.forEach((text, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.id = `choice-${i}`;
+    btn.innerHTML = `<span class="choice-letter">${LETTERS[i]}</span><span>${text}</span>`;
+    btn.onclick = () => submitAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  // Reset UI
+  document.getElementById('result-banner').className = 'result-banner';
+  document.getElementById('game-actions').className  = 'game-actions';
+
+  // Next button label
+  const isLast = index === total - 1;
+  document.getElementById('next-btn').textContent =
+    isLast ? 'See Results →' : 'Next Question →';
+
+  updateNextButtonState();
+  showScreen('screen-game');
+}
+
+function submitAnswer(choiceIndex) {
+  if (g.answered) return;
+  g.answered = true;
+
+  const q            = g.questions[g.currentIndex];
+  const correct      = choiceIndex === q.answer_index;
+  const correctIndex = q.answer_index;
+
+  if (correct) g.scoreCorrect++;
+
+  // Disable all choices
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+
+  // Highlight
+  const chosenBtn  = document.getElementById(`choice-${choiceIndex}`);
+  const correctBtn = document.getElementById(`choice-${correctIndex}`);
+  if (correct) {
+    chosenBtn.classList.add('correct');
+  } else {
+    chosenBtn.classList.add('wrong');
+    correctBtn.classList.add('correct');
+  }
+
+  // Score in header
+  document.getElementById('hdr-correct').textContent = g.scoreCorrect;
+  document.getElementById('hdr-total').textContent   = g.currentIndex + 1;
+
+  // Banner
+  const banner = document.getElementById('result-banner');
+  if (correct) {
+    banner.className = 'result-banner correct-banner active';
+    document.getElementById('result-icon').textContent = '✓';
+    document.getElementById('result-text').textContent =
+      randomPraise() + ' — that\'s correct!';
+  } else {
+    banner.className = 'result-banner wrong-banner active';
+    document.getElementById('result-icon').textContent = '✗';
+    document.getElementById('result-text').textContent =
+      `Not quite. The answer was ${LETTERS[correctIndex]}) ${q.choices[correctIndex]}`;
+  }
+
+  // Show actions
+  document.getElementById('game-actions').className = 'game-actions active';
+  updateNextButtonState();
+}
+
+function updateNextButtonState() {
+  const btn = document.getElementById('next-btn');
+  if (!btn || !g.inGame) return;
+
+  const nextIndex = g.currentIndex + 1;
+  const hasNextQuestion = nextIndex < g.questions.length;
+  const answeredAllAvailable = g.currentIndex >= g.questions.length - 1;
+
+  if (hasNextQuestion) {
+    btn.disabled = false;
+    btn.textContent = 'Next Question ->';
+  } else if (g.generationDone) {
+    btn.disabled = false;
+    btn.textContent = 'See Results ->';
+  } else if (answeredAllAvailable) {
+    btn.disabled = true;
+    btn.textContent = 'Generating next question...';
+  }
+}
+
+function randomPraise() {
+  const list = ['Nice!', 'Correct!', 'Well done!', 'Exactly!', 'Great job!', 'Spot on!'];
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function nextQuestion() {
+  const nextIndex = g.currentIndex + 1;
+  if (nextIndex < g.questions.length) {
+    g.currentIndex = nextIndex;
+    showQuestion(g.currentIndex);
+  } else if (g.generationDone) {
+    showResults();
+  } else {
+    updateNextButtonState();
+    pollStatus();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESULTS
+═══════════════════════════════════════════════════════════════════════════ */
+function showResults() {
+  const total  = g.questions.length;
+  const score  = g.scoreCorrect;
+  const pct    = score / total;
+
+  let emoji, title;
+  if      (pct === 1)   { emoji = '🏆'; title = 'Perfect Score!'; }
+  else if (pct >= 0.8)  { emoji = '🌟'; title = 'Excellent!'; }
+  else if (pct >= 0.6)  { emoji = '👍'; title = 'Good Job!'; }
+  else if (pct >= 0.4)  { emoji = '📚'; title = 'Keep Learning!'; }
+  else                   { emoji = '🎯'; title = 'Better Luck Next Time!'; }
+
+  document.getElementById('results-emoji').textContent = emoji;
+  document.getElementById('results-title').textContent = title;
+  document.getElementById('results-score').textContent = `${score} / ${total}`;
+
+  showScreen('screen-results');
+}
+
+async function playAgain() {
+  // Same topic, generate a fresh set of 5 questions
+  g.questions = [];
+  g.totalQuestions = 5;
+  g.foundTitle = '';
+  g.generationDone = false;
+  g.inGame = false;
+  g.currentIndex = 0;
+  g.scoreCorrect = 0;
+  g.answered = false;
+
+  showScreen('screen-loading');
+  setLoading(`Finding "${g.theme}" on Wikipedia…`, 'One moment…');
+  document.getElementById('progress-wrap').style.display = 'none';
+  setProgress(0, 5);
+
+  try {
+    await api('/api/start', 'POST', { theme: g.theme });
+    pollStatus();
+  } catch (e) {
+    setLoading('Error', e.message || 'Could not restart game.');
+  }
+}
+
+async function changeTheme() {
+  try { await api('/api/reset', 'POST'); } catch {}
+  showThemes();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   API HELPER
+═══════════════════════════════════════════════════════════════════════════ */
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, headers: {} };
+  if (body) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(path, opts);
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try { const j = await res.json(); msg = j.detail || msg; } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+</script>
+</body>
+</html>

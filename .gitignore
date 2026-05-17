@@ -1,0 +1,45 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Virtual envs ─────────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+.uv-cache/
+
+# ── Model weights & datasets (too large for git; fetched from HF Hub) ───────
+adapters/
+models/
+data/
+reports/
+ratings_*.jsonl
+
+# ── Wikipedia HTTP caches ────────────────────────────────────────────────────
+.wiki_cache/
+.wiki_cache_*/
+
+# ── PyInstaller build artifacts ──────────────────────────────────────────────
+build/
+dist/
+final_app/
+final_app.rar
+*.spec
+*.exe
+desktop_launcher.py
+desktop_standalone.py
+
+# ── Editor / OS noise ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ── Claude Code workspace ────────────────────────────────────────────────────
+.claude/
