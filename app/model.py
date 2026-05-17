@@ -46,7 +46,7 @@ _torch     = None
 # Override with the TRIVIA_ADAPTER_REPO env var if you fork/retrain.
 DEFAULT_ADAPTER_REPO = os.getenv(
     "TRIVIA_ADAPTER_REPO",
-    "YOUR_HF_USERNAME/qwen-0.5b-trivia-lora",
+    "PedroWatuha/qwen-0.5b-trivia-lora",
 )
 
 

@@ -34,12 +34,11 @@ On the first run, the app downloads:
 
 - The base model (`Qwen/Qwen2.5-0.5B-Instruct`, ~1 GB) from Hugging Face
 - The fine-tuned LoRA adapter (~79 MB) from
-  `YOUR_HF_USERNAME/qwen-0.5b-trivia-lora`
+  `PedroWatuha/qwen-0.5b-trivia-lora`
 
 Both are cached under `~/.cache/huggingface/` after the first download.
 
-> **Note**: replace the placeholder above with the real Hugging Face repo
-> hosting your adapter, or set the `TRIVIA_ADAPTER_REPO` environment variable.
+> To use your own fine-tuned adapter, set `TRIVIA_ADAPTER_REPO=<your-username>/<your-repo>`.
 
 ## Project layout
 
